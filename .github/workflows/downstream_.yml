@@ -26,4 +26,4 @@ jobs:
       - name: Sleeping step
         run: |
           sleep 120
-          echo ${inputs.max_retries}
+          echo ${{ inputs.max_retries }}
