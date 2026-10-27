@@ -25,5 +25,8 @@ jobs:
     steps:
       - name: Sleeping step
         run: |
-          sleep 120
+          sleep 20
           echo ${{ inputs.max_retries }}
+
+      - name: failed step
+        run: exit 100
