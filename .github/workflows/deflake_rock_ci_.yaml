@@ -34,7 +34,7 @@ jobs:
           wait-for-completion: true
           inputs: |
             { 
-              "max_retries": ${{ matrix.max_retries }}
+              "max_retries": "${{ matrix.max_retries }}"
             }
 
       - name: All jobs completed
