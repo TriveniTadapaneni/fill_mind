@@ -21,6 +21,9 @@ jobs:
   find_baseline_run:
     name: Trigger downstream workflow
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        max_retries : ["21", "10" , "5"]
     steps:
       - name: Dispatch test_artifacts.yml
         id: dispatch
@@ -31,7 +34,7 @@ jobs:
           wait-for-completion: true
           inputs: |
             { 
-              "max_retries": "100"
+              "max_retries": ${{ matrix.max_retries }}
             }
 
       - name: All jobs completed
