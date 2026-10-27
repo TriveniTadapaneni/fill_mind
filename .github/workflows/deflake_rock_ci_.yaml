@@ -39,7 +39,7 @@ jobs:
 
       - name: Retry failed jobs
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ steps.dispatch.outputs.run-id }}
           REPO: ROCm/hipBLASLt
         run: |
