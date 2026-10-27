@@ -14,6 +14,8 @@ on:
 
 permissions:
   contents: read
+  actions: write
+  id-token: write
 
 jobs:
   find_baseline_run:
@@ -24,20 +26,12 @@ jobs:
         id: dispatch
         uses: benc-uk/workflow-dispatch@d004979be141727c7a17c28f603e2facc40d0855 # v1.3.3
         with:
-          workflow: test_artifacts.yml
+          workflow: downstream_.yml
           ref: main
           wait-for-completion: false
           inputs: |
-            { "artifact_group": "${{ matrix.target.amdgpu_family }}",
-              "artifact_run_id": "${{ needs.find_baseline_run.outputs.rockrel_run_id }}",
-              "amdgpu_families": "${{ matrix.target.amdgpu_family }}",
-              "amdgpu_targets": "${{ matrix.target.amdgpu_targets }}",
-              "test_runs_on": "${{ matrix.target.test_runs_on }}",
-              "test_type": "${{ matrix.target.test_type }}",
-              "release_type": "ci",
-              "repository": "ROCm/TheRock",
-              "ref": "main",
-              "build_variant": "release"
+            { 
+              "max_retries": "100",
             }
 
       - name: All jobs completed
