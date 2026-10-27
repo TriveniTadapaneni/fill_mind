@@ -6,7 +6,7 @@ on:
       max_retries:
         description: "Additional retry attempts after the first (default 2 = 3 total attempts)"
         type: string
-        default: "2"
+        default: "20"
       amdgpu_families:
         description: "Comma-separated arch subset override (blank = all enabled)"
         type: string
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        max_retries : ["21", "10" , "5"]
+        max_retries : ["1000", "1001" , "1002"]
     steps:
       - name: Dispatch downstream run
         id: dispatch
