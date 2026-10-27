@@ -19,10 +19,11 @@ permissions:
   contents: read
 
 jobs:
-  name: Sleeping 
-  runs-on: ubuntu-24.04
-  steps:
-    - name: Sleeping step
-      run: |
-        sleep 120
-        echo ${inputs.max_retries}
+  Sleeping:
+    name: Sleeping
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Sleeping step
+        run: |
+          sleep 120
+          echo ${inputs.max_retries}
