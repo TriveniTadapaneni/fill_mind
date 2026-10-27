@@ -25,7 +25,7 @@ jobs:
       matrix:
         max_retries : ["21", "10" , "5"]
     steps:
-      - name: Dispatch test_artifacts.yml
+      - name: Dispatch downstream run
         id: dispatch
         uses: benc-uk/workflow-dispatch@d004979be141727c7a17c28f603e2facc40d0855 # v1.3.3
         with:
@@ -37,5 +37,39 @@ jobs:
               "max_retries": "${{ matrix.max_retries }}"
             }
 
-      - name: All jobs completed
-        run: echo "Done !!!"
+      - name: Retry failed jobs
+        if: ${{ steps.dispatch.outputs.conclusion == 'failure' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          RUN_ID: ${{ steps.dispatch.outputs.run-id }}
+          REPO: ROCm/hipBLASLt
+        run: |
+          max_retries=3
+
+          for attempt in $(seq 1 $max_retries); do
+            echo "Retry attempt $attempt"
+
+            gh api \
+              -X POST \
+              repos/${REPO}/actions/runs/${RUN_ID}/rerun-failed-jobs
+
+            # Wait for rerun to complete
+            gh run watch ${RUN_ID} \
+              --repo ${REPO} \
+              --exit-status
+
+            status=$(gh run view ${RUN_ID} \
+              --repo ${REPO} \
+              --json conclusion \
+              -q .conclusion)
+
+            echo "Conclusion: $status"
+
+            if [ "$status" = "success" ]; then
+              echo "Workflow succeeded after retry"
+              exit 0
+            fi
+          done
+
+          echo "Workflow still failing after $max_retries retries"
+          exit 1
