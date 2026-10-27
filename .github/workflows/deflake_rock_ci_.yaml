@@ -31,7 +31,7 @@ jobs:
           wait-for-completion: false
           inputs: |
             { 
-              "max_retries": "100",
+              "max_retries": "100"
             }
 
       - name: All jobs completed
