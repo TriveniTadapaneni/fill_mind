@@ -41,7 +41,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ steps.dispatch.outputs.run-id }}
-          REPO: ROCm/hipBLASLt
+          REPO: ${{ github.repository }}
         run: |
           max_retries=3
 
