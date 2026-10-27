@@ -28,7 +28,7 @@ jobs:
         with:
           workflow: downstream_.yml
           ref: main
-          wait-for-completion: false
+          wait-for-completion: true
           inputs: |
             { 
               "max_retries": "100"
