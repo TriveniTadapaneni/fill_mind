@@ -1,0 +1,44 @@
+name: De-flake Nightly Tests (Weekly)
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_retries:
+        description: "Additional retry attempts after the first (default 2 = 3 total attempts)"
+        type: string
+        default: "2"
+      amdgpu_families:
+        description: "Comma-separated arch subset override (blank = all enabled)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  find_baseline_run:
+    name: Trigger downstream workflow
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch test_artifacts.yml
+        id: dispatch
+        uses: benc-uk/workflow-dispatch@d004979be141727c7a17c28f603e2facc40d0855 # v1.3.3
+        with:
+          workflow: test_artifacts.yml
+          ref: main
+          wait-for-completion: false
+          inputs: |
+            { "artifact_group": "${{ matrix.target.amdgpu_family }}",
+              "artifact_run_id": "${{ needs.find_baseline_run.outputs.rockrel_run_id }}",
+              "amdgpu_families": "${{ matrix.target.amdgpu_family }}",
+              "amdgpu_targets": "${{ matrix.target.amdgpu_targets }}",
+              "test_runs_on": "${{ matrix.target.test_runs_on }}",
+              "test_type": "${{ matrix.target.test_type }}",
+              "release_type": "ci",
+              "repository": "ROCm/TheRock",
+              "ref": "main",
+              "build_variant": "release"
+            }
+
+      - name: All jobs completed
+        run: echo "Done !!!"

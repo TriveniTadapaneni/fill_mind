@@ -1,0 +1,25 @@
+name: De-flake Nightly Tests (Weekly)
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_retries:
+        description: "Additional retry attempts after the first (default 2 = 3 total attempts)"
+        type: string
+        default: "2"
+  workflow_call:
+    inputs:
+      max_retries:
+        description: "Additional retry attempts after the first (default 2 = 3 total attempts)"
+        type: string
+        default: "2"
+     
+
+permissions:
+  contents: read
+
+jobs:
+  - name: Sleeping 
+    run: |
+      sleep 120
+      echo ${inputs.max_retries}
