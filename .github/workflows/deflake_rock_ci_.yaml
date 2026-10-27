@@ -1,4 +1,4 @@
-name: De-flake Nightly Tests (Weekly)
+name: De-flake Job
 
 on:
   workflow_dispatch:

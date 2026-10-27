@@ -1,4 +1,4 @@
-name: De-flake Nightly Tests (Weekly)
+name: Downstream workflow
 
 on:
   workflow_dispatch:
