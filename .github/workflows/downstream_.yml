@@ -22,8 +22,9 @@ jobs:
   Sleeping:
     name: Sleeping
     runs-on: ubuntu-24.04
-    matrix:
-      max_retries : ["21", "10" , "5"]
+    strategy:
+      matrix:
+        max_retries : ["21", "10" , "5"]
     steps:
       - name: Sleeping step
         run: |
