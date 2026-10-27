@@ -38,7 +38,7 @@ jobs:
             }
 
       - name: Retry failed jobs
-        if: ${{ steps.dispatch.outputs.conclusion == 'failure' }}
+        need: [ dispatch ]
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           RUN_ID: ${{ steps.dispatch.outputs.run-id }}
