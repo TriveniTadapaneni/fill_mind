@@ -44,7 +44,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           max_retries=3
-
+          gh --version
           for attempt in $(seq 1 $max_retries); do
             echo "Retry attempt $attempt"
 
