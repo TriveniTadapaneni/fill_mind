@@ -1,18 +1,23 @@
-name: Downstream workflow
+name: Downstream workflow ${{ inputs.component }}
 
 on:
   workflow_dispatch:
     inputs:
-      max_retries:
-        description: "Additional retry attempts after the first (default 2 = 3 total attempts)"
+      component:
+        description: "component to test"
         type: string
-        default: "2"
+      max_test_timeout:
+        description: "test job timeout"
+        type: string
+
   workflow_call:
     inputs:
-      max_retries:
-        description: "Additional retry attempts after the first (default 2 = 3 total attempts)"
+      component:
+        description: "component to test"
         type: string
-        default: "2"
+      max_test_timeout:
+        description: "test job timeout"
+        type: string
      
 
 permissions:
@@ -20,13 +25,12 @@ permissions:
 
 jobs:
   Sleeping:
-    name: Sleeping
+    name: Testing
     runs-on: ubuntu-24.04
     steps:
       - name: Sleeping step
         run: |
-          sleep 20
-          echo ${{ inputs.max_retries }}
-
+          echo "Testing ${{ inputs.component }}"
+          sleep ${{ inputs.max_test_timeout }}
       - name: failed step
         run: exit 100

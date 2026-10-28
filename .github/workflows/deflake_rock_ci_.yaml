@@ -6,11 +6,11 @@ on:
       max_retries:
         description: "Additional retry attempts after the first (default 2 = 3 total attempts)"
         type: string
-        default: "20"
-      amdgpu_families:
-        description: "Comma-separated arch subset override (blank = all enabled)"
+        default: "5"
+      max_test_timeout:
+        description: "downstream job max timeout in seconds"
         type: string
-        default: ""
+        default: "43200"
 
 permissions:
   contents: read
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        max_retries : ["1000", "1001" , "1002"]
+        component : ["rocblas", "hipblas" , "rocwmma"]
     steps:
       - name: Dispatch downstream run
         id: dispatch
@@ -35,7 +35,8 @@ jobs:
           wait-for-completion: true
           inputs: |
             { 
-              "max_retries": "${{ matrix.max_retries }}"
+              "component": "${{ matrix.component }}",
+              "max_test_timeout": "${{ inputs.max_test_timeout }}"
             }
 
       - name: Retry failed jobs
