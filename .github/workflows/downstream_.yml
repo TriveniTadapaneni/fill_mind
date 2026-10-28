@@ -1,4 +1,4 @@
-name: Downstream workflow ${{ inputs.component }}
+name: Downstream workflow
 
 on:
   workflow_dispatch:
@@ -19,6 +19,7 @@ on:
         description: "test job timeout"
         type: string
      
+run-name: Test ${{ inputs.component }}
 
 permissions:
   contents: read
