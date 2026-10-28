@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       max_retries:
-        description: "Additional retry attempts after the first (default 2 = 3 total attempts)"
+        description: "Additional retry attempts after downstream job frist failure"
         type: string
         default: "5"
       max_test_timeout:
@@ -45,7 +45,7 @@ jobs:
           RUN_ID: ${{ steps.dispatch.outputs.runId }}
           REPO: ${{ github.repository }}
         run: |
-          max_retries=${{ matrix.max_retries }}
+          max_retries=${{ inputs.max_retries }}
           gh --version
           status=$(gh run view "${RUN_ID}" \
             --repo "${REPO}" \
