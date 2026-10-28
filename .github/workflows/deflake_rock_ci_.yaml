@@ -15,6 +15,7 @@ on:
 permissions:
   contents: read
   actions: write
+  checks: read
   id-token: write
 
 jobs:
@@ -45,20 +46,29 @@ jobs:
         run: |
           max_retries=${{ matrix.max_retries }}
           gh --version
+          status=$(gh run view "${RUN_ID}" \
+            --repo "${REPO}" \
+            --json conclusion \
+            -q .conclusion)
+          if [ "$status" = "success" ]; then
+            echo "Workflow succeeded without retries"
+            exit 0
+          fi
+
           for attempt in $(seq 1 $max_retries); do
             echo "Retry attempt $attempt"
 
             gh api \
               -X POST \
-              repos/${REPO}/actions/runs/${RUN_ID}/rerun-failed-jobs
+              "repos/${REPO}/actions/runs/${RUN_ID}/rerun-failed-jobs"
 
             # Wait for rerun to complete
-            gh run watch ${RUN_ID} \
-              --repo ${REPO} \
-              --exit-status
+            # Inspect the conclusion below so a failed run does not stop Bash -e.
+            gh run watch "${RUN_ID}" \
+              --repo "${REPO}"
 
-            status=$(gh run view ${RUN_ID} \
-              --repo ${REPO} \
+            status=$(gh run view "${RUN_ID}" \
+              --repo "${REPO}" \
               --json conclusion \
               -q .conclusion)
 
@@ -69,3 +79,6 @@ jobs:
               exit 0
             fi
           done
+
+          echo "::error::Workflow did not succeed after $max_retries retries (conclusion: $status)"
+          exit 1
