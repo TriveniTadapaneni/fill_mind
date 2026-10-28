@@ -33,6 +33,8 @@ jobs:
           workflow: downstream_.yml
           ref: main
           wait-for-completion: true
+          wait-timeout-seconds: 10800
+          wait-interval-seconds: 900
           inputs: |
             { 
               "component": "${{ matrix.component }}",
