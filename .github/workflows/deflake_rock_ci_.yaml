@@ -24,8 +24,8 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
+        fail-fast : false
         component : ["rocblas", "hipblas" , "rocwmma"]
-        fail-fast: false
     steps:
       - name: Dispatch downstream run
         id: dispatch
