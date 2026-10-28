@@ -25,6 +25,7 @@ jobs:
     strategy:
       matrix:
         component : ["rocblas", "hipblas" , "rocwmma"]
+        fail-fast: false
     steps:
       - name: Dispatch downstream run
         id: dispatch
@@ -41,18 +42,33 @@ jobs:
               "max_test_timeout": "${{ inputs.max_test_timeout }}"
             }
 
+      - name: check the status of the first run
+        id: run_status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.dispatch.outputs.runId }}
+          REPO: ${{ github.repository }}
+        run: |
+            status=$(gh run view "${RUN_ID}" \
+              --repo "${REPO}" \
+              --json conclusion \
+              -q .conclusion)
+            echo "status=$status" >> "$GITHUB_OUTPUT"
+
       - name: Retry failed jobs
+        if: ${{ steps.run_status.outputs.status == 'failure' || steps.run_status.outputs.status == 'timed_out' }}
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ steps.dispatch.outputs.runId }}
           REPO: ${{ github.repository }}
         run: |
           max_retries=${{ inputs.max_retries }}
-          gh --version
+
           status=$(gh run view "${RUN_ID}" \
             --repo "${REPO}" \
             --json conclusion \
             -q .conclusion)
+
           if [ "$status" = "success" ]; then
             echo "Workflow succeeded without retries"
             exit 0
@@ -67,8 +83,7 @@ jobs:
 
             # Wait for rerun to complete
             # Inspect the conclusion below so a failed run does not stop Bash -e.
-            gh run watch "${RUN_ID}" \
-              --repo "${REPO}"
+            gh run watch "${RUN_ID}" --repo "${REPO}"
 
             status=$(gh run view "${RUN_ID}" \
               --repo "${REPO}" \

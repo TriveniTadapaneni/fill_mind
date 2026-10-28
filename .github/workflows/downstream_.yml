@@ -7,7 +7,8 @@ on:
         description: "component to test"
         type: string
       max_test_timeout:
-        description: "test job timeout"
+        description: "Test duration in seconds"
+        default: "1200"
         type: string
 
   workflow_call:
@@ -16,7 +17,8 @@ on:
         description: "component to test"
         type: string
       max_test_timeout:
-        description: "test job timeout"
+        description: "Test duration in seconds"
+        default: "1200"
         type: string
      
 run-name: Test ${{ inputs.component }}
@@ -30,8 +32,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Sleeping step
+        env:
+          COMPONENT: ${{ inputs.component }}
+          TEST_DURATION: ${{ inputs.max_test_timeout }}
         run: |
-          echo "Testing ${{ inputs.component }}"
-          sleep ${{ inputs.max_test_timeout }}
+          echo "Testing $COMPONENT"
+          sleep "$TEST_DURATION"
       - name: failed step
         run: exit 100
