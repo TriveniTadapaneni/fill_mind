@@ -4,99 +4,65 @@ on:
   workflow_dispatch:
     inputs:
       max_retries:
-        description: "Additional retry attempts after downstream job frist failure"
+        description: "Additional failed-job retries (2 = 3 total attempts)"
         type: string
-        default: "5"
+        default: "2"
       max_test_timeout:
-        description: "downstream job max timeout in seconds"
+        description: "Downstream test duration in seconds (1–18000)"
         type: string
-        default: "43200"
+        default: "1200"
+      poll_interval:
+        description: "Seconds between run-status checks (30–900)"
+        type: string
+        default: "60"
+      monitor_timeout_minutes:
+        description: "Total monitoring budget including retries (1–350 minutes)"
+        type: string
+        default: "350"
 
 permissions:
   contents: read
   actions: write
-  checks: read
-  id-token: write
 
 jobs:
-  find_baseline_run:
-    name: Trigger downstream workflow
+  trigger_monitor_retry:
+    name: Trigger, monitor and retry (${{ matrix.component }})
     runs-on: ubuntu-24.04
+    timeout-minutes: 360
     strategy:
-      fail-fast : false
+      fail-fast: false
       matrix:
-        component : ["rocblas", "hipblas" , "rocwmma"]
+        component: [rocblas, hipblas, rocwmma]
+    env:
+      MAX_RETRIES: ${{ inputs.max_retries }}
+      TEST_DURATION: ${{ inputs.max_test_timeout }}
+      POLL_INTERVAL: ${{ inputs.poll_interval }}
+      MONITOR_TIMEOUT_MINUTES: ${{ inputs.monitor_timeout_minutes }}
     steps:
-      - name: Dispatch downstream run
+      - name: Checkout controller
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Validate inputs before dispatch
+        run: python3 scripts/monitor_run.py --validate-only
+
+      - name: Dispatch downstream run once
         id: dispatch
         uses: benc-uk/workflow-dispatch@d004979be141727c7a17c28f603e2facc40d0855 # v1.3.3
         with:
           workflow: downstream_.yml
           ref: main
-          wait-for-completion: true
-          wait-timeout-seconds: 10800
-          wait-interval-seconds: 900
+          wait-for-completion: false
           inputs: |
-            { 
+            {
               "component": "${{ matrix.component }}",
               "max_test_timeout": "${{ inputs.max_test_timeout }}"
             }
 
-      - name: check the status of the first run
-        id: run_status
+      - name: Monitor and rerun failed jobs
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ steps.dispatch.outputs.runId }}
           REPO: ${{ github.repository }}
-        run: |
-            status=$(gh run view "${RUN_ID}" \
-              --repo "${REPO}" \
-              --json conclusion \
-              -q .conclusion)
-            echo "status=$status" >> "$GITHUB_OUTPUT"
-
-      - name: Retry failed jobs
-        if: ${{ steps.run_status.outputs.status == 'failure' || steps.run_status.outputs.status == 'timed_out' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RUN_ID: ${{ steps.dispatch.outputs.runId }}
-          REPO: ${{ github.repository }}
-        run: |
-          max_retries=${{ inputs.max_retries }}
-
-          status=$(gh run view "${RUN_ID}" \
-            --repo "${REPO}" \
-            --json conclusion \
-            -q .conclusion)
-
-          if [ "$status" = "success" ]; then
-            echo "Workflow succeeded without retries"
-            exit 0
-          fi
-
-          for attempt in $(seq 1 $max_retries); do
-            echo "Retry attempt $attempt"
-
-            gh api \
-              -X POST \
-              "repos/${REPO}/actions/runs/${RUN_ID}/rerun-failed-jobs"
-
-            # Wait for rerun to complete
-            # Inspect the conclusion below so a failed run does not stop Bash -e.
-            gh run watch "${RUN_ID}" --repo "${REPO}"
-
-            status=$(gh run view "${RUN_ID}" \
-              --repo "${REPO}" \
-              --json conclusion \
-              -q .conclusion)
-
-            echo "Conclusion: $status"
-
-            if [ "$status" = "success" ]; then
-              echo "Workflow succeeded after retry"
-              exit 0
-            fi
-          done
-
-          echo "::error::Workflow did not succeed after $max_retries retries (conclusion: $status)"
-          exit 1
+        run: python3 scripts/monitor_run.py
